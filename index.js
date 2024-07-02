@@ -4,34 +4,30 @@ const app = express();
 // API key for OpenWeatherMap
 const weatherAPIKey = "98a5d1cf72bf9821ecfcf58872b07db1";
 
-
 // Define a GET request handler for the "/api/hello" endpoint
 app.get("/api/hello", async (req, res) => {
   // Extract visitor name from query parameters, default to "Guest" if not provided
   const visitorName = req.query.visitor_name || "Guest";
 
   // Extract client IP address from the request
-  const clientIP = req.ip;
+  let clientIP = req.ip;
 
+  // Handle special cases for localhost
+  if (clientIP === "::1" || clientIP === "127.0.0.1") {
+    clientIP = "8.8.8.8"; // Default to Google's public DNS for testing purposes
+  }
 
   try {
-    // // Fetch location data from the external API using the client IP address
-    // const locationResponse = await axios.get(
-    //   `https://ipapi.co/${clientIP}/json/`
-    // );
-    // // Extract city name from the location response, default to "Unknown location" if not provided
-    // const location = locationResponse.data.city;
-
-    // Use the browser's Geolocation API to get the user's location
-    const geolocationResponse = await axios.get(
-      "https://geolocation-db.com/jsonp"
+    // Fetch location data from the external API using the client IP address
+    const locationResponse = await axios.get(
+      `https://ipapi.co/${clientIP}/json/`
     );
-    const geolocation = geolocationResponse.data;
-    const userLocation = geolocation.city || "Lagos";
+    // Extract city name from the location response, default to "Unknown location" if not provided
+    const location = locationResponse.data.city;
 
     // Fetch weather data from the OpenWeatherMap API using the location
     const weatherResponse = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=${userLocation}&appid=${weatherAPIKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${weatherAPIKey}&units=metric`
     );
     // Extract temperature from the weather response
     const weather = weatherResponse.data;
@@ -39,16 +35,17 @@ app.get("/api/hello", async (req, res) => {
 
     // Send a JSON response with the client IP, location, and a greeting message including the temperature
 
-
     res.send({
       client_IP: clientIP,
-      location: userLocation,
-      greeting: `Hello, ${visitorName}! The temperature is ${temperature} degrees Celsius in ${userLocation}.`,
+      location: location,
+      greeting: `Hello, ${visitorName}! The temperature is ${temperature} degrees Celsius in ${location}.`,
     });
   } catch (error) {
     // Log the error and send a 500 Internal Server Error response if fetching location or weather data fails
     console.error(error);
-    res.status(500).json({ error: `"Failed to fetch location or weather data"` });
+    res
+      .status(500)
+      .json({ error: `"Failed to fetch location or weather data"` });
   }
 });
 
