@@ -1,20 +1,25 @@
 const express = require("express");
 const axios = require("axios");
+const requestIp = require("request-ip");
 const app = express();
 // API key for OpenWeatherMap
 const weatherAPIKey = "98a5d1cf72bf9821ecfcf58872b07db1";
+
+// Middleware to get client IP address
+app.use(requestIp.mw());
 
 // Define a GET request handler for the "/api/hello" endpoint
 app.get("/api/hello", async (req, res) => {
   // Extract visitor name from query parameters, default to "Guest" if not provided
   const visitorName = req.query.visitor_name || "Guest";
 
-  // Extract client IP address from the request
-  let clientIP = req.ip;
+  let clientIP = req.clientIp;
 
   // Handle special cases for localhost
   if (clientIP === "::1" || clientIP === "127.0.0.1") {
-    clientIP = "8.8.8.8"; // Default to Google's public DNS for testing purposes
+    clientIP = await axios
+      .get("https://api.ipify.org?format=json")
+      .then((response) => response.data.ip);
   }
 
   try {
