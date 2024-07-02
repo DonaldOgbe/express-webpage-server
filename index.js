@@ -12,7 +12,6 @@ app.get("/api/hello", async (req, res) => {
   // Extract client IP address from the request
   const clientIP = req.ip;
 
-  // Handle special cases for localhost
 
   try {
     // Fetch location data from the external API using the client IP address
@@ -20,7 +19,7 @@ app.get("/api/hello", async (req, res) => {
       `https://ipapi.co/${clientIP}/json/`
     );
     // Extract city name from the location response, default to "Unknown location" if not provided
-    const location = locationResponse.data.city || "Lagos";
+    const location = locationResponse.data.city;
 
     // Fetch weather data from the OpenWeatherMap API using the location
     const weatherResponse = await axios.get(
